@@ -112,6 +112,7 @@ const backtrackingSearch = (table: ICell[][], solvingProcess: ICell[]) => {
 
   for (let index = 0; index < domain.length; index += 1) {
     const value = domain[index];
+
     if (cellProcess && value) {
       cellProcess.value = value;
       cellProcess.cellState = CellState.PROCESSING;

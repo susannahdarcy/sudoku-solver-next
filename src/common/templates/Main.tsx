@@ -1,5 +1,6 @@
-import React, { ReactNode } from 'react';
+import React, { ReactNode, useState } from 'react';
 
+import { Menu } from '@/common/components/Menu';
 import { AppConfig } from '@/common/utils/AppConfig';
 
 type IMainProps = {
@@ -8,15 +9,17 @@ type IMainProps = {
 };
 
 const Main = (props: IMainProps) => {
-  // const [showMenu, setShowMenu] = useState(true);
+  const [showMenu, setShowMenu] = useState(true);
 
   return (
-    <div className="px-1 w-full antialiased text-gray-700">
+    <div className="flex">
       {props.meta}
 
-      {/* <Menu setShowMenu={setShowMenu} showMenu={showMenu} /> */}
+      <div className="order-last w-1/6">
+        <Menu setShowMenu={setShowMenu} showMenu={showMenu} />
+      </div>
 
-      <div className="flex flex-col justify-center items-center">
+      <div className="flex flex-col w-full justify-center items-center">
         <div className="py-10 px-2 w-full sm:p-10">
           <h1 className="place-self-start pl-4 font-mono text-4xl font-black text-center overline sm:place-self-center">
             {AppConfig.title}

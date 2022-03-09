@@ -7,7 +7,7 @@ type IMenu = {
 
 const Menu = ({ setShowMenu, showMenu }: IMenu) => {
   return (
-    <div>
+    <div className="h-full bg-gray-800 text-white">
       <button
         type="button"
         onClick={() => {

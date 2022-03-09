@@ -18,6 +18,9 @@ module.exports = {
     borderColor: {
       DEFAULT: '#27272a',
     },
+    boxShadow: {
+      '3xl': '0 35px 70px 0 rgba(0, 0, 0, 0.3)',
+    },
   },
   plugins: [],
 };

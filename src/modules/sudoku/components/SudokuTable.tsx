@@ -21,7 +21,7 @@ const SudokuTable = ({ getTableData, setTableData }: ISudokuTableData) => {
   };
 
   return (
-    <div className="grid grid-cols-9">
+    <div className="grid grid-cols-9 shadow-3xl">
       {map(
         flatTable,
         ({ value, index, prefilled, cellState }: ICellComponent) => (

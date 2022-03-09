@@ -21,13 +21,9 @@ function Sudoku() {
   if (firstSudokuString === '') throw new Error('failed to load sudoku string');
   const firstTable = inputSudoku(firstSudokuString);
 
-  const [sudokuTable, setTable] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('sudokuTable');
-      return saved ? JSON.parse(saved) : firstTable;
-    }
-    return firstTable;
-  });
+  const [loadFromLocalStorage, setLoadFromLocalStorage] = useState(true);
+
+  const [sudokuTable, setTable] = useState(firstTable);
 
   const getTableData = () => sudokuTable;
 
@@ -37,13 +33,7 @@ function Sudoku() {
 
   const [areButtonsDisabled, setAreButtonsDisabled] = useState(false);
 
-  const [currentQuizNumber, setCurrentQuizNumber] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('currentQuizNumber');
-      return saved ? JSON.parse(saved) : 0;
-    }
-    return 0;
-  });
+  const [currentQuizNumber, setCurrentQuizNumber] = useState(0);
 
   const setCurrentQuiz = (quizNumber: number) => {
     setCurrentQuizNumber(quizNumber);
@@ -58,12 +48,24 @@ function Sudoku() {
   };
 
   useEffect(() => {
-    localStorage.setItem('sudokuTable', JSON.stringify(sudokuTable));
-    localStorage.setItem(
-      'currentQuizNumber',
-      JSON.stringify(currentQuizNumber)
-    );
-  }, [sudokuTable, currentQuizNumber]);
+    if (loadFromLocalStorage) {
+      const savedTable = localStorage.getItem('sudokuTable');
+      if (savedTable) {
+        const parseTable: ICell[][] = JSON.parse(savedTable);
+        if (typeof parseTable !== 'undefined') setTable(parseTable);
+      }
+
+      const savedQuizNumber = localStorage.getItem('currentQuizNumber');
+      if (savedQuizNumber) setCurrentQuizNumber(JSON.parse(savedQuizNumber));
+    } else {
+      localStorage.setItem('sudokuTable', JSON.stringify(sudokuTable));
+      localStorage.setItem(
+        'currentQuizNumber',
+        JSON.stringify(currentQuizNumber)
+      );
+    }
+    setLoadFromLocalStorage(false);
+  }, [sudokuTable, currentQuizNumber, loadFromLocalStorage]);
 
   const handleLoadTable = () => {
     const nextQuiz = currentQuizNumber + 1;
@@ -99,17 +101,17 @@ function Sudoku() {
       const cell = pullAt(solvingProcess, 0)[0];
       if (cell) {
         const [i, j] = convert1DIndexTo2DIndex(cell.index);
-        processTable[i][j].value = cell.value;
-        processTable[i][j].cellState = cell.cellState;
+        processTable[i]![j]!.value = cell.value;
+        processTable[i]![j]!.cellState = cell.cellState;
         setTable(processTable);
 
-        trackingTable[i][j].value = cell.value;
-        trackingTable[i][j].cellState = cell.cellState;
+        trackingTable[i]![j]!.value = cell.value;
+        trackingTable[i]![j]!.cellState = cell.cellState;
       } else {
         setAreButtonsDisabled(false);
         clearInterval(showProcessInterval);
       }
-    }, 10);
+    }, 5);
   };
 
   const handleModalLoadNext = () => {
@@ -119,7 +121,7 @@ function Sudoku() {
 
   return (
     <div className="py-10 w-100 sm:w-168">
-      <div className="flex justify-between py-2">
+      <div className="flex justify-between py-1">
         <div className="font-mono text-xs sm:text-base">
           <button
             type="button"
