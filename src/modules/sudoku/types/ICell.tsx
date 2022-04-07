@@ -5,17 +5,21 @@ interface ICell {
   cellState: CellState;
 }
 
+interface IGrid {
+  index: number;
+}
+
 interface ICellComponent extends ICell {
   handleSetTable: Function;
 }
 
-export type { ICell, ICellComponent };
+export type { ICell, ICellComponent, IGrid };
 
 enum CellState {
-  ERROR,
-  UNKNOWN,
-  PROCESSING,
-  CORRECT,
+  ERROR = 'ERROR',
+  UNKNOWN = 'UNKNOWN',
+  PROCESSING = 'PROCESSING',
+  CORRECT = 'CORRECT',
 }
 
 export { CellState };

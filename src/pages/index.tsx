@@ -1,6 +1,7 @@
 import { Meta } from '@/common/layout/Meta';
 import { Main } from '@/common/templates/Main';
-import Sudoku from '@/modules/sudoku/Sudoku';
+import { Sudoku } from '@/modules/sudoku/Sudoku';
+import { LoginButton } from '@/modules/userAuth/LoginButton';
 
 const Index = () => {
   return (
@@ -12,6 +13,7 @@ const Index = () => {
         />
       }
     >
+      <LoginButton />
       <Sudoku />
     </Main>
   );

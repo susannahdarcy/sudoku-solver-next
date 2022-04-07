@@ -8,9 +8,15 @@ import {
   toNumber,
 } from 'lodash-es';
 
+import examplesDiff from '@/common/assets/examplesWithDiff.json';
 import sudokuExamples from '@/common/assets/sudokuExample.json';
 import { CellState, ICell } from '@/modules/sudoku/types/ICell';
 
+enum SudokuDifficulty {
+  EASY = 'easy',
+  MEDIUM = 'medium',
+  HARD = 'hard',
+}
 // Convert 1D array to 2D array functions
 const convert1DIndexTo2DIndex = (index1D: number): [number, number] => {
   const i: number = Math.floor(index1D / 9);
@@ -18,11 +24,14 @@ const convert1DIndexTo2DIndex = (index1D: number): [number, number] => {
   return [i, j];
 };
 
-const loadExamples = (quizNumber: number): string => {
+const loadExamples = (
+  difficulty: SudokuDifficulty,
+  quizNumber: number
+): string => {
   if (!sudokuExamples[quizNumber])
     throw new Error('Failed to load sudoku puzzle json');
-
-  return sudokuExamples[quizNumber]![0] || '';
+  // return sudokuExamples[quizNumber]![0] || '';
+  return examplesDiff[difficulty][quizNumber]!.sudoku || '';
 };
 
 const getCheckedTable = (table: ICell[][], cellsInError: string[]) => {
@@ -49,7 +58,7 @@ const getCheckedTable = (table: ICell[][], cellsInError: string[]) => {
 };
 
 const getNextTable = (quizToLoad: number, table: ICell[][]) => {
-  const sudokuString = loadExamples(quizToLoad);
+  const sudokuString = loadExamples(SudokuDifficulty.EASY, quizToLoad);
 
   const nextTable = cloneDeep(table);
   const inputArray: number[] = map(split(sudokuString, ''), toNumber);
@@ -120,6 +129,7 @@ const inputSudoku = (sudokuString: string) => {
 
 export {
   convert1DIndexTo2DIndex,
+  SudokuDifficulty,
   loadExamples,
   getCheckedTable,
   getNextTable,

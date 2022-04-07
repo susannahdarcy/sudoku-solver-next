@@ -1,8 +1,17 @@
 import React, { useEffect, useState } from 'react';
 
+import { faLightbulb } from '@fortawesome/free-regular-svg-icons';
+import {
+  faArrowLeftRotate,
+  faCheck,
+  faEraser,
+  faPlus,
+} from '@fortawesome/free-solid-svg-icons';
 import { cloneDeep, isEmpty, pullAt } from 'lodash-es';
 
 import Modal from '@/common/components//Modal';
+import { IconButton } from '@/common/components/IconButton';
+import { Timer } from '@/common/components/Timer';
 import { SudokuTable } from '@/modules/sudoku/components/SudokuTable';
 import { ICell } from '@/modules/sudoku/types/ICell';
 import AISolver from '@/modules/sudoku/utils/AISolver';
@@ -13,11 +22,15 @@ import {
   getNextTable,
   inputSudoku,
   loadExamples,
+  SudokuDifficulty,
 } from '@/modules/sudoku/utils/Sudoku';
+import { SudokuActionStack } from '@/modules/sudoku/utils/SudokuAction';
 import { vaildateSudoku } from '@/modules/sudoku/utils/SudokuValidater';
 
+let sudokuActionStack = new SudokuActionStack();
+
 function Sudoku() {
-  const firstSudokuString = loadExamples(0);
+  const firstSudokuString = loadExamples(SudokuDifficulty.MEDIUM, 0);
   if (firstSudokuString === '') throw new Error('failed to load sudoku string');
   const firstTable = inputSudoku(firstSudokuString);
 
@@ -31,13 +44,15 @@ function Sudoku() {
     setTable(table);
   };
 
-  const [areButtonsDisabled, setAreButtonsDisabled] = useState(false);
-
   const [currentQuizNumber, setCurrentQuizNumber] = useState(0);
 
   const setCurrentQuiz = (quizNumber: number) => {
     setCurrentQuizNumber(quizNumber);
   };
+
+  const [quizDifficulty] = useState(SudokuDifficulty.EASY);
+
+  const [areButtonsDisabled, setAreButtonsDisabled] = useState(false);
 
   const [showSuccessModal, setSuccessModal] = useState(false);
 
@@ -45,6 +60,14 @@ function Sudoku() {
 
   const setShowSuccessModal = (showModal: boolean) => {
     setSuccessModal(showModal);
+  };
+
+  const [timerIsActive, setTimerIsActive] = useState(false);
+  const [timerSeconds, setTimerSeconds] = useState(0);
+
+  const resetTimer = () => {
+    setTimerIsActive(false);
+    setTimerSeconds(0);
   };
 
   useEffect(() => {
@@ -57,15 +80,23 @@ function Sudoku() {
 
       const savedQuizNumber = localStorage.getItem('currentQuizNumber');
       if (savedQuizNumber) setCurrentQuizNumber(JSON.parse(savedQuizNumber));
+
+      const savedTime = localStorage.getItem('sudokuTimer');
+      if (savedTime) setTimerSeconds(JSON.parse(savedTime));
     } else {
       localStorage.setItem('sudokuTable', JSON.stringify(sudokuTable));
       localStorage.setItem(
         'currentQuizNumber',
         JSON.stringify(currentQuizNumber)
       );
+      localStorage.setItem('sudokuTimer', JSON.stringify(timerSeconds));
     }
     setLoadFromLocalStorage(false);
-  }, [sudokuTable, currentQuizNumber, loadFromLocalStorage]);
+  }, [sudokuTable, currentQuizNumber, loadFromLocalStorage, timerSeconds]);
+
+  const pushCellChange = (priorCell: ICell) => {
+    sudokuActionStack.pushCellChange(priorCell);
+  };
 
   const handleLoadTable = () => {
     const nextQuiz = currentQuizNumber + 1;
@@ -73,6 +104,8 @@ function Sudoku() {
 
     setCurrentQuiz(nextQuiz);
     setTable(nextTable);
+    sudokuActionStack = new SudokuActionStack();
+    resetTimer();
   };
 
   const handleCheckTable = () => {
@@ -85,11 +118,13 @@ function Sudoku() {
   };
 
   const handleClearTable = () => {
+    sudokuActionStack.pushChangeTable(sudokuTable);
     setTable(getClearedTable(sudokuTable));
   };
 
   const handleSolveTable = () => {
-    const solvingProcess = AISolver(sudokuTable);
+    sudokuActionStack.pushChangeTable(sudokuTable);
+    const solvingProcess = AISolver(getClearedTable(sudokuTable));
 
     // Table to keep track of changes;
     const trackingTable = cloneDeep(sudokuTable);
@@ -114,92 +149,113 @@ function Sudoku() {
     }, 5);
   };
 
+  const handleUndo = () => {
+    const priorTable = sudokuActionStack.popSudokuActionStack(sudokuTable);
+    setTable(priorTable);
+  };
+
   const handleModalLoadNext = () => {
     setSuccessModal(false);
     handleLoadTable();
+    resetTimer();
   };
 
   return (
-    <div className="py-10 w-100 sm:w-168">
-      <div className="flex justify-between py-1">
-        <div className="font-mono text-xs sm:text-base">
-          <button
-            type="button"
-            disabled={areButtonsDisabled}
-            onClick={handleLoadTable}
-          >
-            Load next level
-          </button>
-        </div>
-        <div className="font-mono text-xs sm:text-base">
-          <button
-            type="button"
-            disabled={areButtonsDisabled}
-            onClick={handleClearTable}
-          >
-            Clear it
-          </button>
+    <div className="pb-10 w-100 sm:w-168">
+      <div className="flex flex-row justify-between items-center pb-3">
+        <div className="uppercase ">{quizDifficulty.toString()}</div>
+        <div className="">
+          <Timer
+            isActive={timerIsActive}
+            setIsActive={setTimerIsActive}
+            seconds={timerSeconds}
+            setSeconds={setTimerSeconds}
+          />
         </div>
       </div>
 
-      {getShowSuccessModal() && (
-        <Modal setShowModal={setShowSuccessModal}>
-          <div className="place-self-end pr-2 font-mono text-xs sm:text-base">
-            <button
-              type="button"
-              disabled={areButtonsDisabled}
-              onClick={() => setSuccessModal(false)}
-            >
-              x
-            </button>
-          </div>
-          <div className="w-[10rem] h-[10rem] sm:w-[20rem] sm:h-[20rem]">
-            {/* <SuccessLottie /> */}
-          </div>
+      <div className="relative">
+        <SudokuTable {...{ getTableData, setTableData, pushCellChange }} />
 
-          <div className="flex flex-col gap-2 justify-center items-center pb-5">
-            <h3 className="font-mono text-3xl font-black text-center">
-              Complete!
-            </h3>
-
-            <div className="font-mono text-xs sm:text-base">
+        {getShowSuccessModal() && (
+          <Modal setShowModal={setShowSuccessModal}>
+            <div className="place-self-end pr-2 font-mono text-xs sm:text-base">
               <button
                 type="button"
                 disabled={areButtonsDisabled}
-                onClick={handleModalLoadNext}
+                onClick={() => setSuccessModal(false)}
               >
-                Load next level
+                x
               </button>
             </div>
+            <div className="w-[10rem] h-[10rem] sm:w-[20rem] sm:h-[20rem]">
+              {/* <SuccessLottie /> */}
+            </div>
+
+            <div className="flex flex-col gap-2 justify-center items-center pb-5">
+              <h3 className="font-mono text-3xl font-black text-center">
+                Complete!
+              </h3>
+
+              <div className="font-mono text-xs sm:text-base">
+                <button
+                  type="button"
+                  disabled={areButtonsDisabled}
+                  onClick={handleModalLoadNext}
+                >
+                  Load next level
+                </button>
+              </div>
+            </div>
+          </Modal>
+        )}
+      </div>
+
+      <div className="pt-2">
+        <div className="flex flex-row justify-evenly py-3 px-6 bg-white rounded-3xl drop-shadow-xl">
+          <IconButton
+            areButtonsDisabled={
+              areButtonsDisabled || sudokuActionStack.isEmpty()
+            }
+            handleLoadTable={handleUndo}
+            faIcon={faArrowLeftRotate}
+            buttonTitle={'Undo'}
+          />
+
+          <IconButton
+            areButtonsDisabled={areButtonsDisabled}
+            handleLoadTable={handleClearTable}
+            faIcon={faEraser}
+            buttonTitle={'Clear it'}
+          />
+
+          <div className="px-1 w-full sm:px-6">
+            <IconButton
+              areButtonsDisabled={areButtonsDisabled}
+              handleLoadTable={handleCheckTable}
+              faIcon={faCheck}
+              buttonTitle={'Check it'}
+              colour="green"
+            />
           </div>
-        </Modal>
-      )}
 
-      <SudokuTable {...{ getTableData, setTableData }} />
+          <IconButton
+            areButtonsDisabled={areButtonsDisabled}
+            handleLoadTable={handleSolveTable}
+            faIcon={faLightbulb}
+            buttonTitle={'Solve it'}
+          />
 
-      <div className="flex justify-between py-2">
-        <div className="font-mono text-xs sm:text-base">
-          <button
-            type="button"
-            disabled={areButtonsDisabled}
-            onClick={handleSolveTable}
-          >
-            Solve it for me
-          </button>
-        </div>
-
-        <div className="font-mono text-xs sm:text-base">
-          <button
-            type="button"
-            disabled={areButtonsDisabled}
-            onClick={handleCheckTable}
-          >
-            Check it
-          </button>
+          <IconButton
+            areButtonsDisabled={areButtonsDisabled}
+            handleLoadTable={handleLoadTable}
+            faIcon={faPlus}
+            buttonTitle={'Next Game'}
+          />
         </div>
       </div>
     </div>
   );
 }
 
-export default Sudoku;
+export { Sudoku };

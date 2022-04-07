@@ -6,6 +6,15 @@ module.exports = {
         168: '36rem',
         100: '20.25rem',
       },
+      colors: {
+        'grey-blue': '#27272a',
+      },
+      borderColor: {
+        DEFAULT: '#27272a',
+      },
+      fontFamily: {
+        serif: ['Roboto Slab'],
+      },
     },
     borderWidth: {
       DEFAULT: '1px',
@@ -15,11 +24,8 @@ module.exports = {
       4: '4px',
       6: '6px',
     },
-    borderColor: {
-      DEFAULT: '#27272a',
-    },
     boxShadow: {
-      '3xl': '0 35px 70px 0 rgba(0, 0, 0, 0.3)',
+      '3xl': '0 15px 50px 5px rgba(0, 0, 0, 0.15)',
     },
   },
   plugins: [],

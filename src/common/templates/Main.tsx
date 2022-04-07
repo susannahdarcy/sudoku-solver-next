@@ -1,6 +1,6 @@
 import React, { ReactNode, useState } from 'react';
 
-import { Menu } from '@/common/components/Menu';
+import { SideMenu } from '@/common/components/SideMenu';
 import { AppConfig } from '@/common/utils/AppConfig';
 
 type IMainProps = {
@@ -10,25 +10,24 @@ type IMainProps = {
 
 const Main = (props: IMainProps) => {
   const [showMenu, setShowMenu] = useState(true);
-
   return (
-    <div className="flex">
+    <div className="overflow-hidden relative h-screen md:flex">
       {props.meta}
 
-      <div className="order-last w-1/6">
-        <Menu setShowMenu={setShowMenu} showMenu={showMenu} />
+      <div className="hidden relative sm:flex">
+        <SideMenu setShowMenu={setShowMenu} showMenu={showMenu} />
       </div>
 
-      <div className="flex flex-col w-full justify-center items-center">
+      <div className="flex overflow-y-auto flex-col items-center w-full h-screen">
         <div className="py-10 px-2 w-full sm:p-10">
-          <h1 className="place-self-start pl-4 font-mono text-4xl font-black text-center overline sm:place-self-center">
+          <h1 className="place-self-start pl-4 font-mono text-4xl text-center overline sm:place-self-center font-grey-blue">
             {AppConfig.title}
           </h1>
         </div>
 
         {props.children}
 
-        <div className="py-8 w-8/12 text-sm text-center border-t border-gray-300">
+        <div className="py-8 mt-5 w-8/12 text-sm text-center border-t border-gray-300">
           {/* © Copyright {new Date().getFullYear()} {AppConfig.title}. Powered with{' '} */}
           {/* <span role="img" aria-label="Love"> */}
           {/*  ♥ */}

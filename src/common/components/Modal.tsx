@@ -27,7 +27,6 @@ type Props = {
   setShowModal: Function;
 };
 
-// eslint-disable-next-line react/function-component-definition
 const Modal: React.FC<Props> = ({ setShowModal, children }) => {
   const ref = useRef<HTMLDivElement>(null);
   // ref = useRef<HTMLInputElement>();
@@ -46,7 +45,7 @@ const Modal: React.FC<Props> = ({ setShowModal, children }) => {
     };
   }, []);
   return (
-    <div className="flex fixed inset-0 z-50 justify-center items-center bg-white/70">
+    <div className="flex absolute inset-0 z-50 justify-center items-center bg-white/70">
       <div className="relative my-6 mx-auto w-auto max-w-3xl">
         <div
           ref={ref}

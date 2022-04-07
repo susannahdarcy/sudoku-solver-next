@@ -1,15 +1,5 @@
 @tailwind base;
-
-a {
-  @apply text-blue-700;
-}
-
-a:hover {
-  @apply border-b-2 border-[#b8b7ad];
-}
-
 @tailwind components;
-
 @tailwind utilities;
 
 .content p {
@@ -18,4 +8,10 @@ a:hover {
 
 .content ul {
   @apply my-6;
+}
+
+/* Toggle B */
+input:checked ~ .dot {
+  transform: translateX(100%);
+  background-color: #48bb78;
 }
