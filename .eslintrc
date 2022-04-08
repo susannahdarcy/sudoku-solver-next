@@ -69,7 +69,8 @@
         "unused-imports/no-unused-vars": [
           "error",
           { "argsIgnorePattern": "^_" }
-        ]
+        ],
+        "no-underscore-dangle": ["error", { "allow": ["_id"] }]
       }
     }
   ]

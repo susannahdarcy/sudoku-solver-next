@@ -5,6 +5,7 @@ type IToggle = {
   toggleDescription: string;
   handleChange: ChangeEventHandler<HTMLInputElement>;
   settingOption: string;
+  checked: boolean;
 };
 
 const Toggle: React.FC<IToggle> = ({
@@ -12,6 +13,7 @@ const Toggle: React.FC<IToggle> = ({
   toggleDescription,
   handleChange,
   settingOption,
+  checked,
 }) => {
   return (
     <div className="flex justify-between items-center w-full">
@@ -30,6 +32,7 @@ const Toggle: React.FC<IToggle> = ({
             className="sr-only"
             onChange={handleChange}
             name={settingOption}
+            checked={checked}
           />
           <div className="block w-14 h-8 bg-gray-600 rounded-full"></div>
           <div className="absolute top-1 left-1 w-6 h-6 bg-white rounded-full transition dot"></div>

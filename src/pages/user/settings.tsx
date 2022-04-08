@@ -1,10 +1,9 @@
 import React, { ChangeEvent } from 'react';
 
-import { withPageAuthRequired } from '@auth0/nextjs-auth0';
+import { withPageAuthRequired, getSession } from '@auth0/nextjs-auth0';
 
 import { Toggle } from '@/common/components/Form';
 import {
-  ISettingOptions,
   SettingElement,
   SettingNavBar,
   SettingPageType,
@@ -12,15 +11,26 @@ import {
 } from '@/common/components/Settings';
 import { Meta } from '@/common/layout/Meta';
 import { Main } from '@/common/templates/Main';
+import { IUserSettings } from '@/models/IUserSettings';
+import UserSettings from '@/models/UserSettings';
 import { SudokuDifficulty } from '@/modules/sudoku/utils/Sudoku';
 
-const Settings = () => {
-  const defaultSettings: ISettingOptions = {
+import dbConnect from '../../../utils/dbConnect';
+
+interface ISettingProps {
+  userSettingsData: string;
+}
+
+const Settings = ({ userSettingsData }: ISettingProps) => {
+  const savedUserData = JSON.parse(userSettingsData);
+
+  const initialSettings: IUserSettings = savedUserData ?? {
+    _id: '',
     hasSolvingAnimation: true,
     sudokuDifficulty: SudokuDifficulty.EASY,
   };
 
-  const [settings, setSettings] = React.useState(defaultSettings);
+  const [settings, setSettings] = React.useState(initialSettings);
 
   const handleToggleChange = (event: ChangeEvent<HTMLInputElement>) => {
     if (event.target) {
@@ -35,6 +45,41 @@ const Settings = () => {
   const [currentSettingPage, setCurrentSettingPage] = React.useState(
     SettingPageType.GAME
   );
+
+  const handleSaveSettings = async () => {
+    if (savedUserData) {
+      // Update Settings DB
+      try {
+        await fetch(
+          `http://localhost:3000/api/userSettings/${savedUserData._id}`,
+          {
+            method: 'PUT',
+            headers: {
+              Accept: 'application/json',
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(settings),
+          }
+        );
+      } catch (error) {
+        console.log(error);
+      }
+      // Create Settings Entry
+    } else {
+      try {
+        await fetch('http://localhost:3000/api/userSettings', {
+          method: 'POST',
+          headers: {
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(settings),
+        });
+      } catch (error) {
+        console.log(error);
+      }
+    }
+  };
 
   return (
     <Main
@@ -60,10 +105,14 @@ const Settings = () => {
                 toggleDescription="Turn on to show the solving process for the Sudoku Solve"
                 handleChange={handleToggleChange}
                 settingOption="hasSolvingAnimation"
+                checked={settings.hasSolvingAnimation}
               />
             </SettingElement>
           </SettingSection>
         )}
+        <div>
+          <button onClick={handleSaveSettings}>Save</button>
+        </div>
       </div>
     </Main>
   );
@@ -80,6 +129,28 @@ const Settings = () => {
  *  solving animation
  *  dark theme
  */
+
 export default Settings;
 
-export const getServerSideProps = withPageAuthRequired();
+export const getServerSideProps = withPageAuthRequired({
+  getServerSideProps: async ({ req, res }) => {
+    const auth0User = getSession(req, res);
+    let data = {};
+    // console.log(auth0User?.user);
+    if (auth0User?.user) {
+      const id = auth0User?.user.sub;
+
+      // Connect to mongodb, and get user settings.
+      dbConnect();
+      const user = await UserSettings.findById(id);
+
+      data = JSON.stringify(user);
+    }
+
+    return {
+      props: {
+        userSettingsData: data,
+      },
+    };
+  },
+});
