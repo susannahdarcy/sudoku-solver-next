@@ -1,9 +1,8 @@
 import { getSession, withApiAuthRequired } from '@auth0/nextjs-auth0';
 import { NextApiRequest, NextApiResponse } from 'next';
 
+import dbConnect from '@/../utils/dbConnect';
 import UserSettings from '@/models/UserSettings';
-
-import dbConnect from '../../../../utils/dbConnect';
 
 dbConnect();
 

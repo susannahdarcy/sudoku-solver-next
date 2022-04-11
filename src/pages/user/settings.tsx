@@ -1,7 +1,9 @@
 import React, { ChangeEvent } from 'react';
 
-import { withPageAuthRequired, getSession } from '@auth0/nextjs-auth0';
+import { withPageAuthRequired, getSession, useUser } from '@auth0/nextjs-auth0';
 
+import { userSettingsFetch } from '@/../utils/connections';
+import dbConnect from '@/../utils/dbConnect';
 import { Toggle } from '@/common/components/Form';
 import {
   SettingElement,
@@ -11,11 +13,9 @@ import {
 } from '@/common/components/Settings';
 import { Meta } from '@/common/layout/Meta';
 import { Main } from '@/common/templates/Main';
-import { IUserSettings } from '@/models/IUserSettings';
+import { IUserSettingsSchema } from '@/models/IUserSettingsSchema';
 import UserSettings from '@/models/UserSettings';
 import { SudokuDifficulty } from '@/modules/sudoku/utils/Sudoku';
-
-import dbConnect from '../../../utils/dbConnect';
 
 interface ISettingProps {
   userSettingsData: string;
@@ -23,21 +23,32 @@ interface ISettingProps {
 
 const Settings = ({ userSettingsData }: ISettingProps) => {
   const savedUserData = JSON.parse(userSettingsData);
+  const { user } = useUser();
 
-  const initialSettings: IUserSettings = savedUserData ?? {
+  const initialSettings: IUserSettingsSchema = savedUserData || {
     _id: '',
-    hasSolvingAnimation: true,
-    sudokuDifficulty: SudokuDifficulty.EASY,
+    sudokuGameSettings: {
+      hasSolvingAnimation: true,
+      sudokuDifficulty: SudokuDifficulty.EASY,
+    },
   };
 
   const [settings, setSettings] = React.useState(initialSettings);
 
   const handleToggleChange = (event: ChangeEvent<HTMLInputElement>) => {
+    console.log(event);
     if (event.target) {
-      const checked = event?.target?.checked;
+      const { checked } = event.target;
+      const [settingPage, settingName] = event.target.name.split(' ');
+      // setSettings({
+      //   ...settings,
+      //   [event.target.name]: checked,
+      // });
       setSettings({
         ...settings,
-        [event.target.name]: checked,
+        [settingPage!]: {
+          [settingName!]: checked,
+        },
       });
     }
   };
@@ -46,35 +57,31 @@ const Settings = ({ userSettingsData }: ISettingProps) => {
     SettingPageType.GAME
   );
 
+  // const saveSettingsToLocalStorage = () => {
+  //   localStorage.setItem('sudokuSettings', JSON.stringify(settings));
+  // };
+
   const handleSaveSettings = async () => {
     if (savedUserData) {
       // Update Settings DB
       try {
-        await fetch(
-          `http://localhost:3000/api/userSettings/${savedUserData._id}`,
-          {
-            method: 'PUT',
-            headers: {
-              Accept: 'application/json',
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(settings),
-          }
+        await userSettingsFetch(
+          `api/userSettings/${savedUserData._id}`,
+          'PUT',
+          JSON.stringify(settings)
         );
       } catch (error) {
         console.log(error);
       }
       // Create Settings Entry
-    } else {
+    } else if (user && user.sub) {
       try {
-        await fetch('http://localhost:3000/api/userSettings', {
-          method: 'POST',
-          headers: {
-            Accept: 'application/json',
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(settings),
-        });
+        settings._id = user.sub;
+        await userSettingsFetch(
+          'api/userSettings',
+          'POST',
+          JSON.stringify(settings)
+        );
       } catch (error) {
         console.log(error);
       }
@@ -104,8 +111,8 @@ const Settings = ({ userSettingsData }: ISettingProps) => {
                 toggleTitle="Solving Animation"
                 toggleDescription="Turn on to show the solving process for the Sudoku Solve"
                 handleChange={handleToggleChange}
-                settingOption="hasSolvingAnimation"
-                checked={settings.hasSolvingAnimation}
+                settingOption="sudokuGameSettings hasSolvingAnimation"
+                checked={settings.sudokuGameSettings.hasSolvingAnimation}
               />
             </SettingElement>
           </SettingSection>
@@ -136,17 +143,19 @@ export const getServerSideProps = withPageAuthRequired({
   getServerSideProps: async ({ req, res }) => {
     const auth0User = getSession(req, res);
     let data = {};
-    // console.log(auth0User?.user);
+
     if (auth0User?.user) {
       const id = auth0User?.user.sub;
+      try {
+        // Connect to mongodb, and get user settings.
+        await dbConnect();
+        const user = await UserSettings.findById(id);
 
-      // Connect to mongodb, and get user settings.
-      dbConnect();
-      const user = await UserSettings.findById(id);
-
-      data = JSON.stringify(user);
+        data = JSON.stringify(user);
+      } catch (error) {
+        console.log(error);
+      }
     }
-
     return {
       props: {
         userSettingsData: data,

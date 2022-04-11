@@ -12,6 +12,7 @@ import { cloneDeep, isEmpty, pullAt } from 'lodash-es';
 import Modal from '@/common/components//Modal';
 import { IconButton } from '@/common/components/IconButton';
 import { Timer } from '@/common/components/Timer';
+import { getFromLocalStorage } from '@/common/utils/localStorage';
 import { SudokuTable } from '@/modules/sudoku/components/SudokuTable';
 import { ICell } from '@/modules/sudoku/types/ICell';
 import AISolver from '@/modules/sudoku/utils/AISolver';
@@ -72,17 +73,11 @@ function Sudoku() {
 
   useEffect(() => {
     if (loadFromLocalStorage) {
-      const savedTable = localStorage.getItem('sudokuTable');
-      if (savedTable) {
-        const parseTable: ICell[][] = JSON.parse(savedTable);
-        if (typeof parseTable !== 'undefined') setTable(parseTable);
-      }
+      setTable(getFromLocalStorage('sudokuTable'));
 
-      const savedQuizNumber = localStorage.getItem('currentQuizNumber');
-      if (savedQuizNumber) setCurrentQuizNumber(JSON.parse(savedQuizNumber));
+      setCurrentQuizNumber(getFromLocalStorage('currentQuizNumber'));
 
-      const savedTime = localStorage.getItem('sudokuTimer');
-      if (savedTime) setTimerSeconds(JSON.parse(savedTime));
+      setTimerSeconds(getFromLocalStorage('sudokuTimer'));
     } else {
       localStorage.setItem('sudokuTable', JSON.stringify(sudokuTable));
       localStorage.setItem(
