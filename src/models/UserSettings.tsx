@@ -1,11 +1,11 @@
 import { Schema, model, models, Model } from 'mongoose';
 
 import {
-  ISudokuGameSettingsSchema,
+  ISettingsSchema,
   IUserSettingsSchema,
 } from '@/models/IUserSettingsSchema';
 
-const sudokuGameSettingsSchema = new Schema<ISudokuGameSettingsSchema>({
+const SettingsSchema = new Schema<ISettingsSchema>({
   hasSolvingAnimation: {
     type: Boolean,
     default: true,
@@ -22,7 +22,7 @@ const UserSettingsSchema = new Schema<IUserSettingsSchema>({
     required: [true, 'id is required'],
     unique: true,
   },
-  sudokuGameSettings: sudokuGameSettingsSchema,
+  userSettings: SettingsSchema,
 });
 
 const UserSettings: Model<IUserSettingsSchema> =

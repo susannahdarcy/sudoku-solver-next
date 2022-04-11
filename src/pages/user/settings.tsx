@@ -13,42 +13,33 @@ import {
 } from '@/common/components/Settings';
 import { Meta } from '@/common/layout/Meta';
 import { Main } from '@/common/templates/Main';
-import { IUserSettingsSchema } from '@/models/IUserSettingsSchema';
 import UserSettings from '@/models/UserSettings';
-import { SudokuDifficulty } from '@/modules/sudoku/utils/Sudoku';
+import {
+  SettingContext,
+  defaultSettings,
+} from '@/modules/settings/context/SettingContext';
 
 interface ISettingProps {
   userSettingsData: string;
 }
 
 const Settings = ({ userSettingsData }: ISettingProps) => {
+  console.log(userSettingsData);
   const savedUserData = JSON.parse(userSettingsData);
+  console.log(savedUserData);
   const { user } = useUser();
 
-  const initialSettings: IUserSettingsSchema = savedUserData || {
-    _id: '',
-    sudokuGameSettings: {
-      hasSolvingAnimation: true,
-      sudokuDifficulty: SudokuDifficulty.EASY,
-    },
-  };
-
-  const [settings, setSettings] = React.useState(initialSettings);
+  const [settings, setSettings] = React.useState(
+    savedUserData.userSettings || defaultSettings
+  );
 
   const handleToggleChange = (event: ChangeEvent<HTMLInputElement>) => {
     console.log(event);
     if (event.target) {
       const { checked } = event.target;
-      const [settingPage, settingName] = event.target.name.split(' ');
-      // setSettings({
-      //   ...settings,
-      //   [event.target.name]: checked,
-      // });
       setSettings({
         ...settings,
-        [settingPage!]: {
-          [settingName!]: checked,
-        },
+        [event.target.name]: checked,
       });
     }
   };
@@ -62,13 +53,18 @@ const Settings = ({ userSettingsData }: ISettingProps) => {
   // };
 
   const handleSaveSettings = async () => {
+    const userSettings = {
+      _id: user?.sub,
+      userSettings: settings,
+    };
+
     if (savedUserData) {
       // Update Settings DB
       try {
         await userSettingsFetch(
-          `api/userSettings/${savedUserData._id}`,
+          `api/userSettings/${user?.sub}`,
           'PUT',
-          JSON.stringify(settings)
+          JSON.stringify(userSettings)
         );
       } catch (error) {
         console.log(error);
@@ -76,11 +72,10 @@ const Settings = ({ userSettingsData }: ISettingProps) => {
       // Create Settings Entry
     } else if (user && user.sub) {
       try {
-        settings._id = user.sub;
         await userSettingsFetch(
           'api/userSettings',
           'POST',
-          JSON.stringify(settings)
+          JSON.stringify(userSettings)
         );
       } catch (error) {
         console.log(error);
@@ -107,13 +102,15 @@ const Settings = ({ userSettingsData }: ISettingProps) => {
             subTitle="General Settings for your Sudoku games"
           >
             <SettingElement>
-              <Toggle
-                toggleTitle="Solving Animation"
-                toggleDescription="Turn on to show the solving process for the Sudoku Solve"
-                handleChange={handleToggleChange}
-                settingOption="sudokuGameSettings hasSolvingAnimation"
-                checked={settings.sudokuGameSettings.hasSolvingAnimation}
-              />
+              <SettingContext.Provider value={settings.hasSolvingAnimation}>
+                <Toggle
+                  toggleTitle="Solving Animation"
+                  toggleDescription="Turn on to show the solving process for the Sudoku Solve"
+                  handleChange={handleToggleChange}
+                  settingOption="hasSolvingAnimation"
+                  checked={settings.hasSolvingAnimation}
+                />
+              </SettingContext.Provider>
             </SettingElement>
           </SettingSection>
         )}
@@ -158,7 +155,7 @@ export const getServerSideProps = withPageAuthRequired({
     }
     return {
       props: {
-        userSettingsData: data,
+        userSettingsData: data || defaultSettings,
       },
     };
   },

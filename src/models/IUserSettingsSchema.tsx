@@ -1,11 +1,11 @@
-interface IUserSettingsSchema {
-  _id: string;
-  sudokuGameSettings: ISudokuGameSettingsSchema;
-}
-
-interface ISudokuGameSettingsSchema {
+interface ISettingsSchema {
   hasSolvingAnimation: boolean;
   sudokuDifficulty: string;
 }
 
-export type { IUserSettingsSchema, ISudokuGameSettingsSchema };
+interface IUserSettingsSchema {
+  _id: string;
+  userSettings: ISettingsSchema;
+}
+
+export type { ISettingsSchema, IUserSettingsSchema };
