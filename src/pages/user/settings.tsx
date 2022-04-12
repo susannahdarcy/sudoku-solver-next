@@ -24,14 +24,10 @@ interface ISettingProps {
 }
 
 const Settings = ({ userSettingsData }: ISettingProps) => {
-  console.log(userSettingsData);
   const savedUserData = JSON.parse(userSettingsData);
-  console.log(savedUserData);
   const { user } = useUser();
 
-  const [settings, setSettings] = React.useState(
-    savedUserData.userSettings || defaultSettings
-  );
+  const [settings, setSettings] = React.useState(savedUserData.userSettings);
 
   const handleToggleChange = (event: ChangeEvent<HTMLInputElement>) => {
     console.log(event);
@@ -58,7 +54,9 @@ const Settings = ({ userSettingsData }: ISettingProps) => {
       userSettings: settings,
     };
 
-    if (savedUserData) {
+    console.log(JSON.stringify(userSettings));
+
+    if (savedUserData._id) {
       // Update Settings DB
       try {
         await userSettingsFetch(
@@ -139,23 +137,24 @@ export default Settings;
 export const getServerSideProps = withPageAuthRequired({
   getServerSideProps: async ({ req, res }) => {
     const auth0User = getSession(req, res);
-    let data = {};
+    let data = JSON.stringify({ userSettings: defaultSettings });
 
     if (auth0User?.user) {
       const id = auth0User?.user.sub;
       try {
         // Connect to mongodb, and get user settings.
-        await dbConnect();
+        dbConnect();
         const user = await UserSettings.findById(id);
 
-        data = JSON.stringify(user);
+        if (user) data = JSON.stringify(user);
       } catch (error) {
         console.log(error);
       }
     }
+
     return {
       props: {
-        userSettingsData: data || defaultSettings,
+        userSettingsData: data,
       },
     };
   },
